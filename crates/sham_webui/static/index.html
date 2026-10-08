@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Shambhala Ops</title>
+<style>
+  :root { --touch: 64px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #111; color: #eee;
+         touch-action: none; overscroll-behavior: none; }
+  #map { position: fixed; inset: 0; background: #1a2b1a; }
+  .toolbar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 8px;
+             padding: 12px; background: rgba(0,0,0,.7); }
+  .toolbar button { flex: 1; min-height: var(--touch); min-width: var(--touch);
+             font-size: 18px; border-radius: 12px; border: 2px solid #444;
+             background: #222; color: #eee; }
+  .toolbar button.active { border-color: #4f4; background: #123412; }
+  #status { position: fixed; top: 0; left: 0; right: 0; padding: 10px;
+            background: rgba(0,0,0,.7); font-size: 16px; display: flex;
+            justify-content: space-between; }
+  #status .offline { color: #fa0; }
+  .big-btn { min-height: 64px; min-width: 64px; font-size: 20px; }
+  .tired #map { filter: contrast(1.2); }
+  .tired .toolbar button { min-height: 88px; font-size: 22px; }
+</style>
+</head>
+<body>
+<div id="map" aria-label="festival map"></div>
+<div id="status">
+  <span id="occ">occupancy --%</span>
+  <span id="net">ONLINE</span>
+  <button id="tiredBtn" class="big-btn" style="min-height:48px">tired</button>
+</div>
+<div class="toolbar" role="toolbar" aria-label="ops tools">
+  <button data-tool="select" class="active">select</button>
+  <button data-tool="paint">paint</button>
+  <button data-tool="stall">stall</button>
+  <button data-tool="route">route</button>
+  <button data-tool="undo">undo</button>
+</div>
+<script>
+"use strict";
+// Shambhala fat-thumb UI. Talks to the API on :8080. Works fully offline:
+// ops queue in memory and sync on reconnect.
+const API = "http://localhost:8080";
+let tool = "select";
+let tired = false;
+let queue = [];
+let lastTap = 0, lastTapXY = null;
+
+const net = document.getElementById("net");
+function setNet(on) {
+  net.textContent = on ? "ONLINE" : "OFFLINE — queuing";
+  net.className = on ? "" : "offline";
+  if (on) flush();
+}
+window.addEventListener("online", () => setNet(true));
+window.addEventListener("offline", () => setNet(false));
+
+async function api(path, opts) {
+  if (!navigator.onLine) { queue.push([path, opts]); setNet(false); return null; }
+  const r = await fetch(API + path, opts);
+  return r.json();
+}
+async function flush() {
+  const q = queue; queue = [];
+  for (const [p, o] of q) { try { await fetch(API + p, o); } catch (e) { queue.push([p, o]); } }
+}
+
+document.querySelectorAll(".toolbar button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".toolbar button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    tool = b.dataset.tool;
+    if (tool === "undo") undo();
+  });
+});
+
+const map = document.getElementById("map");
+map.addEventListener("pointerdown", e => {
+  const now = performance.now();
+  const xy = [e.clientX, e.clientY];
+  if (tool === "stall" && lastTapXY) {
+    const dt = now - lastTap;
+    const d = Math.hypot(xy[0] - lastTapXY[0], xy[1] - lastTapXY[1]);
+    if (dt < 400 && d < 40) { placeStall(e); lastTap = 0; lastTapXY = null; return; }
+  }
+  lastTap = now; lastTapXY = xy;
+});
+
+function placeStall(e) {
+  // double-tap -> angled stall request (angle chosen by tool-long-press in full UI;
+  // default 45 here)
+  api("/stall", { method: "POST", body: "angle=45&x=" + e.clientX + "&y=" + e.clientY });
+}
+function undo() { api("/undo", { method: "POST" }); }
+
+document.getElementById("tiredBtn").addEventListener("click", () => {
+  tired = !tired;
+  document.body.classList.toggle("tired", tired);
+});
+
+setInterval(async () => {
+  const o = await api("/occupancy");
+  if (o) document.getElementById("occ").textContent = "occupancy " + o.occupancy_pct + "%";
+}, 15000);
+</script>
+</body>
+</html>

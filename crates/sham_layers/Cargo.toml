@@ -1,0 +1,8 @@
+[package]
+name = "sham_layers"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sham_domain = { path = "../sham_domain" }
+sham_spatial = { path = "../sham_spatial" }

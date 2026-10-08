@@ -1,0 +1,12 @@
+[package]
+name = "sham_redteam"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sham_domain = { path = "../sham_domain" }
+sham_spatial = { path = "../sham_spatial" }
+sham_odin = { path = "../sham_odin" }
+sham_routing = { path = "../sham_routing" }
+sham_api = { path = "../sham_api" }
+sham_offline = { path = "../sham_offline" }

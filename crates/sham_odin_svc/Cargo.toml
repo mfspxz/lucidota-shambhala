@@ -1,0 +1,9 @@
+[package]
+name = "sham_odin_svc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sham_domain = { path = "../sham_domain" }
+sham_odin = { path = "../sham_odin" }
+sham_api = { path = "../sham_api" }
