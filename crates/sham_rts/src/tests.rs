@@ -267,3 +267,10 @@ fn gesture_debug() {
     let g = Gesture::LongPress(touch(49.0, -123.0, 5));
     assert!(format!("{:?}", g).contains("LongPress"));
 }
+#[test]
+fn angled_stall_rejects_near_miss_angle() {
+    // 45.9 must not truncate to 45
+    let tap = Touch { at: GeoCoord::new(49.2, -122.9).unwrap(), t_ms: 0 };
+    assert!(place_angled_stall(&tap, ZoneId(1), 45.9, 250, 1000.0).is_err());
+    assert!(place_angled_stall(&tap, ZoneId(1), 45.0, 250, 1000.0).is_ok());
+}

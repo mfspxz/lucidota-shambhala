@@ -432,3 +432,32 @@ fn sim_seed_one_stable() {
     let ra = a.run(VehicleClass::Car, 25, 1000);
     assert!(ra.routed >= 25 && !ra.deadlocked);
 }
+#[test]
+fn route_heading_state_not_pruned() {
+    // Regression: A* pruned on node alone could discard the only arrival
+    // heading that permits the next turn, wrongly reporting no route.
+    // X is reachable heading east (cheap) and heading north (pricier);
+    // X->G needs a northbound arrival for a Bus (90-deg turn needs 1400cm,
+    // street is 800cm).
+    use std::collections::HashMap;
+    let mut g = RoadGraph::new();
+    let mut coords = HashMap::new();
+    let (s, x, a, gg) = (PointId(1), PointId(2), PointId(3), PointId(4));
+    for (p, lat, lon) in [(s, 0.0, 0.0), (x, 0.0, 0.002), (a, -0.001, 0.002), (gg, 0.001, 0.002)] {
+        let c = GeoCoord::new(lat, lon).unwrap();
+        coords.insert(p, c);
+        g.add_node(p, c);
+    }
+    let mut mk = |id: u64, n: &str, f: PointId, t: PointId, w: u32| {
+        let st = Street::new(StreetId(id), n, f, t, w).unwrap();
+        g.add_street(&st, &coords);
+    };
+    mk(1, "s-x", s, x, 2000); // east arrival at X (cheap)
+    mk(2, "s-a", s, a, 2000);
+    mk(3, "a-x", a, x, 2000); // north arrival at X (pricier)
+    mk(4, "x-g", x, gg, 800); // needs northbound arrival for Bus
+    let r = g.route(s, gg, VehicleClass::Bus);
+    assert!(r.is_some(), "bus must route via the northbound arrival at X");
+    let r = r.unwrap();
+    assert!(r.nodes.contains(&a), "route must go through A, got {:?}", r.nodes);
+}

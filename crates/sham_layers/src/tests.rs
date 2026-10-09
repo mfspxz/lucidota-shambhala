@@ -153,35 +153,62 @@ fn raster_gsd_sane() {
 // ---- sham-022: CSV/GPX import ----
 #[test]
 fn csv_basic() {
-    let r = import_csv("label,lat,lon\ngate-a,49.2,-122.9\nlot-1,49.21,-122.91\n");
+    let mut pts = Vec::new();
+    let r = import_csv("label,lat,lon\ngate-a,49.2,-122.9\nlot-1,49.21,-122.91\n", &mut pts);
     assert_eq!((r.imported, r.rejected), (2, 0));
+    assert_eq!(pts.len(), 2);
+    assert_eq!(pts[0].label, "gate-a");
+    assert!((pts[0].coord.lat - 49.2).abs() < 1e-9);
+    assert!((pts[1].coord.lon - -122.91).abs() < 1e-9);
 }
 #[test]
 fn csv_latitude_longitude_headers() {
-    let r = import_csv("latitude,longitude\n49.2,-122.9\n");
+    let mut pts = Vec::new();
+    let r = import_csv("latitude,longitude\n49.2,-122.9\n", &mut pts);
     assert_eq!(r.imported, 1);
+    assert_eq!(pts.len(), 1);
 }
 #[test]
 fn csv_missing_cols() {
-    let r = import_csv("name,x\nfoo,1\n");
+    let mut pts = Vec::new();
+    let r = import_csv("name,x\nfoo,1\n", &mut pts);
     assert_eq!(r.imported, 0);
+    assert!(pts.is_empty());
     assert!(r.reasons.iter().any(|s| s.contains("lat/lon")));
 }
 #[test]
 fn csv_bad_rows_rejected() {
-    let r = import_csv("lat,lon\n49.2,-122.9\nnope,xx\n95.0,0.0\n");
+    let mut pts = Vec::new();
+    let r = import_csv("lat,lon\n49.2,-122.9\nnope,xx\n95.0,0.0\n", &mut pts);
     assert_eq!((r.imported, r.rejected), (1, 2));
     assert_eq!(r.reasons.len(), 2);
+    assert_eq!(pts.len(), 1);
 }
 #[test]
 fn csv_empty() {
-    let r = import_csv("");
+    let mut pts = Vec::new();
+    let r = import_csv("", &mut pts);
     assert_eq!(r.imported, 0);
+    assert!(pts.is_empty());
 }
 #[test]
 fn csv_blank_lines_skipped() {
-    let r = import_csv("lat,lon\n\n49.2,-122.9\n\n");
+    let mut pts = Vec::new();
+    let r = import_csv("lat,lon\n\n49.2,-122.9\n\n", &mut pts);
     assert_eq!((r.imported, r.rejected), (1, 0));
+    assert_eq!(pts.len(), 1);
+}
+#[test]
+fn csv_appends_to_existing() {
+    let mut pts = vec![ImportedPoint {
+        label: "pre".into(),
+        coord: GeoCoord::new(0.0, 0.0).unwrap(),
+        attrs: Default::default(),
+    }];
+    let r = import_csv("lat,lon\n49.2,-122.9\n", &mut pts);
+    assert_eq!(r.imported, 1);
+    assert_eq!(pts.len(), 2); // appends, does not clear
+    assert_eq!(pts[0].label, "pre");
 }
 #[test]
 fn gpx_basic() {
@@ -214,4 +241,61 @@ fn imported_point_attrs() {
         attrs: [("src".to_string(), "csv".to_string())].into_iter().collect(),
     };
     assert_eq!(p.attrs["src"], "csv");
+}
+#[test]
+fn geotiff_tiepoint_and_scale_parsed() {
+    // build a TIFF with ModelTiepoint (33922) + ModelPixelScale (33550)
+    let mut v = make_test_tiff(100, 80);
+    // rewrite with extra tags: strip the trailing next-IFD u32, append tags
+    v.truncate(v.len() - 4);
+    let tie_off = v.len() as u32 + 4 + 2 + 2 * 12 + 4; // after new IFD
+    let scale_off = tie_off + 48;
+    let mut ifd = Vec::new();
+    ifd.extend_from_slice(&7u16.to_le_bytes()); // 5 base + 2 geo tags
+    // base tags (copied layout from make_test_tiff)
+    for (tag, typ, val) in [(256u16, 4u16, 100u32), (257, 4, 80), (258, 3, 8), (259, 3, 1), (277, 3, 1)] {
+        ifd.extend_from_slice(&tag.to_le_bytes());
+        ifd.extend_from_slice(&typ.to_le_bytes());
+        ifd.extend_from_slice(&1u32.to_le_bytes());
+        ifd.extend_from_slice(&val.to_le_bytes());
+    }
+    // 33922 DOUBLE count 6 @ tie_off
+    ifd.extend_from_slice(&33922u16.to_le_bytes());
+    ifd.extend_from_slice(&12u16.to_le_bytes());
+    ifd.extend_from_slice(&6u32.to_le_bytes());
+    ifd.extend_from_slice(&tie_off.to_le_bytes());
+    // 33550 DOUBLE count 3 @ scale_off
+    ifd.extend_from_slice(&33550u16.to_le_bytes());
+    ifd.extend_from_slice(&12u16.to_le_bytes());
+    ifd.extend_from_slice(&3u32.to_le_bytes());
+    ifd.extend_from_slice(&scale_off.to_le_bytes());
+    ifd.extend_from_slice(&0u32.to_le_bytes());
+    // patch entry count + append IFD at offset 8
+    let mut full = Vec::new();
+    full.extend_from_slice(b"II");
+    full.extend_from_slice(&42u16.to_le_bytes());
+    full.extend_from_slice(&8u32.to_le_bytes());
+    full.extend_from_slice(&ifd);
+    // pad to tie_off then write doubles
+    while full.len() < tie_off as usize {
+        full.push(0);
+    }
+    for d in [0.0f64, 0.0, 0.0, 500_000.0, 5_500_000.0, 0.0] {
+        full.extend_from_slice(&d.to_le_bytes());
+    }
+    for d in [0.05f64, 0.05, 0.0] {
+        full.extend_from_slice(&d.to_le_bytes());
+    }
+    let info = parse_geotiff(&full).unwrap();
+    let tp = info.tiepoint.expect("tiepoint parsed");
+    assert!((tp[3] - 500_000.0).abs() < 1e-6);
+    assert!((tp[4] - 5_500_000.0).abs() < 1e-6);
+    let ps = info.pixel_scale.expect("pixel scale parsed");
+    assert!((ps[0] - 0.05).abs() < 1e-9);
+}
+#[test]
+fn geotiff_without_geotags_still_parses() {
+    let info = parse_geotiff(&make_test_tiff(64, 64)).unwrap();
+    assert!(info.tiepoint.is_none());
+    assert!(info.pixel_scale.is_none());
 }

@@ -186,16 +186,17 @@ pub fn place_angled_stall(
     stall_width_cm: u32,
     curb_available_cm: f64,
 ) -> Result<StallPlacement, String> {
-    let orientation = match angle_deg as u32 {
-        45 => ParkOrientation::Angled45,
-        60 => ParkOrientation::Angled60,
-        90 => ParkOrientation::Perpendicular,
-        _ => {
-            return Err(format!(
-                "angle {} not supported; use 45, 60, or 90",
-                angle_deg
-            ))
-        }
+    let orientation = if (angle_deg - 45.0).abs() < 1e-6 {
+        ParkOrientation::Angled45
+    } else if (angle_deg - 60.0).abs() < 1e-6 {
+        ParkOrientation::Angled60
+    } else if (angle_deg - 90.0).abs() < 1e-6 {
+        ParkOrientation::Perpendicular
+    } else {
+        return Err(format!(
+            "angle {} not supported; use 45, 60, or 90",
+            angle_deg
+        ));
     };
     if stall_width_cm < 200 || stall_width_cm > 400 {
         return Err(format!("stall width {}cm out of range 200-400", stall_width_cm));

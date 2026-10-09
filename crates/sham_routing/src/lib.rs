@@ -81,6 +81,12 @@ impl RoadGraph {
     /// A* from `from` to `to` for a vehicle class.
     /// Turning-radius constraint: penalize sharp heading changes; reject
     /// turns the vehicle cannot physically make on the target street.
+    ///
+    /// Search state is (node, heading-sector): turn feasibility depends on
+    /// arrival heading, so pruning on node alone can discard the only
+    /// heading that allows the next turn and wrongly report no route.
+    /// 8 sectors (45 deg) keep the state space small while distinguishing
+    /// headings enough for the constraint check.
     pub fn route(
         &self,
         from: PointId,
@@ -92,6 +98,16 @@ impl RoadGraph {
         }
         if from == to {
             return Some(Route { streets: vec![], dist_m: 0.0, nodes: vec![from] });
+        }
+        // heading sector: 0..8 for 45-degree buckets, 8 = "no heading yet" (start)
+        fn sector(heading: Option<f64>) -> u8 {
+            match heading {
+                None => 8,
+                Some(h) => {
+                    let norm = ((h % 360.0) + 360.0) % 360.0;
+                    (norm / 45.0).floor() as u8
+                }
+            }
         }
         #[derive(Clone)]
         struct State {
@@ -121,31 +137,33 @@ impl RoadGraph {
         };
         let mut open = BinaryHeap::new();
         open.push(State { f: h(from), g: 0.0, node: from, heading: None });
-        let mut best: HashMap<PointId, f64> = HashMap::new();
-        let mut came: HashMap<PointId, (PointId, usize)> = HashMap::new();
+        let mut best: HashMap<(PointId, u8), f64> = HashMap::new();
+        let mut came: HashMap<(PointId, u8), (PointId, u8, usize)> = HashMap::new();
         while let Some(s) = open.pop() {
+            let skey = (s.node, sector(s.heading));
             if s.node == to {
-                // reconstruct
+                // reconstruct via sector-keyed predecessors
                 let mut streets = Vec::new();
                 let mut nodes = vec![to];
-                let mut cur = to;
-                while let Some(&(p, ei)) = came.get(&cur) {
+                let mut cur = skey;
+                while let Some(&(p, ps, ei)) = came.get(&cur) {
                     streets.push(self.edges[ei].street);
                     nodes.push(p);
-                    cur = p;
+                    cur = (p, ps);
                 }
                 streets.reverse();
                 nodes.reverse();
                 return Some(Route { streets, dist_m: s.g, nodes });
             }
-            if best.get(&s.node).is_some_and(|&b| b <= s.g) {
+            if best.get(&skey).is_some_and(|&b| b <= s.g) {
                 continue;
             }
-            best.insert(s.node, s.g);
+            best.insert(skey, s.g);
             for (next, ei, len) in self.neighbors(s.node, class) {
                 // turning constraint: heading change vs street width
                 let e = &self.edges[ei];
                 let mut cost = len;
+                let nh: Option<f64>;
                 if let Some(hd) = s.heading {
                     let nb = self.nodes[&s.node].coord.bearing_deg(self.nodes[&next].coord);
                     let mut turn = (nb - hd).abs();
@@ -156,13 +174,16 @@ impl RoadGraph {
                         continue; // physically impossible turn
                     }
                     cost += turn / 90.0 * 20.0; // soft penalty for sharp turns
+                    nh = Some(nb);
+                } else {
+                    nh = Some(self.nodes[&s.node].coord.bearing_deg(self.nodes[&next].coord));
                 }
                 let g2 = s.g + cost;
-                let nb = self.nodes[&s.node].coord.bearing_deg(self.nodes[&next].coord);
+                let nkey = (next, sector(nh));
                 // only relax if better; keep predecessor in sync with the relaxation
-                if best.get(&next).is_none_or(|&b| g2 < b) {
-                    came.insert(next, (s.node, ei));
-                    open.push(State { f: g2 + h(next), g: g2, node: next, heading: Some(nb) });
+                if best.get(&nkey).is_none_or(|&b| g2 < b) {
+                    came.insert(nkey, (s.node, sector(s.heading), ei));
+                    open.push(State { f: g2 + h(next), g: g2, node: next, heading: nh });
                 }
             }
         }
@@ -228,9 +249,17 @@ pub struct Simulator {
     pub total_dist_m: f64,
     /// deadlock detector: ticks with zero progress while cars remain
     pub stalled_ticks: u32,
+    /// street -> (from, to) index; built once so tick() avoids an O(E)
+    /// scan per spawned car.
+    street_ends: HashMap<sham_domain::StreetId, (PointId, PointId)>,
 }
 impl Simulator {
     pub fn new(graph: RoadGraph, tick_s: u64, seed: u64) -> Self {
+        let street_ends = graph
+            .edges
+            .iter()
+            .map(|e| (e.street, (e.from, e.to)))
+            .collect();
         Self {
             graph,
             flows: Vec::new(),
@@ -240,6 +269,7 @@ impl Simulator {
             cars_failed: 0,
             total_dist_m: 0.0,
             stalled_ticks: 0,
+            street_ends,
         }
     }
     fn rand(&mut self) -> u64 {
@@ -270,9 +300,9 @@ impl Simulator {
                     failed += 1;
                     continue;
                 };
-                let from = self.graph.edges.iter().find(|e| e.street == *first).map(|e| e.from);
-                let to = self.graph.edges.iter().find(|e| e.street == *last).map(|e| e.to);
-                let (Some(f), Some(t)) = (from, to) else {
+                let (Some(&(f, _)), Some(&(_, t))) =
+                    (self.street_ends.get(first), self.street_ends.get(last))
+                else {
                     failed += 1;
                     self.flows[fi].dropped_no_route += 1;
                     continue;

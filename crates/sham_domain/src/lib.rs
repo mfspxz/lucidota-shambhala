@@ -281,7 +281,8 @@ impl Zone {
     pub fn park(&mut self, car: &mut Car) -> Result<Receipt, String> {
         if car.zone == Some(self.id) {
             return Err(format!("car {} already parked in zone {}", car.plate, self.name));
-        }        if !self.admits(car.class) {
+        }
+        if !self.admits(car.class) {
             return Err(format!(
                 "zone {} does not admit {:?} in state {:?}",
                 self.name, car.class, self.state

@@ -85,6 +85,10 @@ pub struct RasterInfo {
     pub bits_per_sample: u16,
     pub origin: GeoCoord,   // top-left
     pub pixel_size_m: f64,  // ground sample distance
+    /// Raw ModelTiepoint (tag 33922): (i, j, k, x, y, z) — raster pixel to model space.
+    pub tiepoint: Option<[f64; 6]>,
+    /// Raw ModelPixelScale (tag 33550): (sx, sy, sz).
+    pub pixel_scale: Option<[f64; 3]>,
 }
 
 /// Minimal TIFF parser: uncompressed (compression=1) strips, 8-bit.
@@ -111,6 +115,14 @@ pub fn parse_geotiff(data: &[u8]) -> Result<RasterInfo, String> {
                 } else {
                     u32::from_be_bytes([b[0], b[1], b[2], b[3]])
                 }
+            })
+    };
+    let rd64 = |o: usize| -> Result<f64, String> {
+        data.get(o..o + 8)
+            .ok_or_else(|| "truncated f64".to_string())
+            .map(|b| {
+                let arr = [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]];
+                if le { f64::from_le_bytes(arr) } else { f64::from_be_bytes(arr) }
             })
     };
     if rd16(2)? != 42 {
@@ -153,6 +165,28 @@ pub fn parse_geotiff(data: &[u8]) -> Result<RasterInfo, String> {
     if width == 0 || height == 0 || width > 100_000 || height > 100_000 {
         return Err("implausible raster dimensions".into());
     }
+    // GeoTIFF georeferencing: ModelTiepoint (33922, 6 doubles) and
+    // ModelPixelScale (33550, 3 doubles). Values live at the tag's offset.
+    // Model coords are projected (easting/northing), not lat/lon, so we
+    // expose them raw; origin keeps the festival default.
+    let read_doubles = |tag: u16, n: usize| -> Option<Vec<f64>> {
+        let (typ, raw) = tags.get(&tag)?;
+        if *typ != 12 {
+            return None; // not DOUBLE
+        }
+        let off = *raw as usize;
+        let mut v = Vec::with_capacity(n);
+        for i in 0..n {
+            v.push(rd64(off + i * 8).ok()?);
+        }
+        Some(v)
+    };
+    let tiepoint: Option<[f64; 6]> = read_doubles(33922, 6).and_then(|v| {
+        v.try_into().ok()
+    });
+    let pixel_scale: Option<[f64; 3]> = read_doubles(33550, 3).and_then(|v| {
+        v.try_into().ok()
+    });
     // GeoTIFF origin: use ModelTiepoint (tag 33922) if present, else default 0,0.
     let origin = GeoCoord::new(49.20, -122.91).unwrap(); // festival default
     Ok(RasterInfo {
@@ -162,6 +196,8 @@ pub fn parse_geotiff(data: &[u8]) -> Result<RasterInfo, String> {
         bits_per_sample: bps,
         origin,
         pixel_size_m: 0.05, // 5cm GSD typical for drone orthomosaic
+        tiepoint,
+        pixel_scale,
     })
 }
 
@@ -228,7 +264,8 @@ pub struct ImportReport {
 }
 
 /// Import CSV: header must include lat,lon (or latitude,longitude); optional label column.
-pub fn import_csv(text: &str) -> ImportReport {
+/// Parsed points are appended to `pts` (mirrors import_gpx); the report carries counts.
+pub fn import_csv(text: &str, pts: &mut Vec<ImportedPoint>) -> ImportReport {
     let mut lines = text.lines();
     let header = match lines.next() {
         Some(h) => h,
@@ -247,7 +284,7 @@ pub fn import_csv(text: &str) -> ImportReport {
         };
     };
     let label_i = cols.iter().position(|c| c == "label" || c == "name");
-    let mut pts = Vec::new();
+    let imported_before = pts.len();
     let mut rejected = 0usize;
     let mut reasons = Vec::new();
     for (n, line) in lines.enumerate() {
@@ -282,8 +319,7 @@ pub fn import_csv(text: &str) -> ImportReport {
             }
         }
     }
-    let imported = pts.len();
-    let _ = pts;
+    let imported = pts.len() - imported_before;
     ImportReport { imported, rejected, reasons }
 }
 

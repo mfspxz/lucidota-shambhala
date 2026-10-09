@@ -105,13 +105,13 @@ impl VehicleRegistry {
 
 // ---------------- sham-015: street/point graph DB ----------------
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum GNode {
     Street(StreetId),
     Point(u64),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum GEdge {
     Connects,   // street connects two points
     AdjacentTo, // point adjacent to point (via street)
@@ -159,15 +159,15 @@ impl StreetGraph {
         seen.insert(from);
         q.push_back(from);
         while let Some(cur) = q.pop_front() {
-            let mut nbrs: Vec<GNode> = self
+            // Deterministic neighbor order via BTreeSet (GNode: Ord);
+            // avoids per-expansion format!-based sorting.
+            let nbrs: std::collections::BTreeSet<GNode> = self
                 .edges
                 .iter()
                 .filter(|(x, _, _)| *x == cur)
                 .map(|(_, _, b)| *b)
                 .chain(self.edges.iter().filter(|(_, _, b)| *b == cur).map(|(x, _, _)| *x))
                 .collect();
-            nbrs.sort_by_key(|n| format!("{:?}", n));
-            nbrs.dedup();
             for nb in nbrs {
                 if seen.insert(nb) {
                     prev.insert(nb, cur);
