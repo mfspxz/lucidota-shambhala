@@ -171,8 +171,8 @@
 
 ## Commits
 
-- Commit for `RECEIPTS.md` PROVENANCE edit: **TBD**
-- Commit for 2026-10-07 close-shit test counts: **TBD**
+- Commit for `RECEIPTS.md` PROVENANCE edit + AUDIT-APPLICATION.md: `909f371`
+- Commit for 2026-10-07 close-shit test counts (353/353): `bdc433f` (pre-existing, recorded-not-rerun)
 - Commit for `RECEIPTS.md` build receipt: **TBD**
 
 No commit hashes are asserted by this application. Verify independently.
