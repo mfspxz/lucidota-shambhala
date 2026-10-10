@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "name": "sham-offline",
-  "codon": "so",
+  "codon": "sb",
   "version": "0.1.0",
   "description": "offline-first op log: push, merge, replay; festival-map sync primitives (organelle)",
   "contracts": [

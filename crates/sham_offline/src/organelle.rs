@@ -60,7 +60,7 @@ fn sham_offline_manifest() -> OrganelleManifest {
     OrganelleManifest {
         schema_version: MANIFEST_SCHEMA_VERSION.to_string(),
         name: "sham-offline".to_string(),
-        codon: "so".to_string(),
+        codon: "sb".to_string(),
         version: "0.1.0".to_string(),
         description: "offline-first op log: push, merge, replay; festival-map sync primitives (organelle)".to_string(),
         contracts: vec![
@@ -186,7 +186,7 @@ mod tests {
         let v: Value = serde_json::from_str(include_str!("../../../organelles/sham-offline.manifest.json")).expect("manifest JSON parses");
         let m = validate_manifest_json(&v).expect("static manifest must validate");
         assert_eq!(m.name, "sham-offline");
-        assert_eq!(m.codon, "so");
+        assert_eq!(m.codon, "sb");
     }
 
     #[test]
@@ -203,15 +203,15 @@ mod tests {
 
         let ctx = CallContext::new("migration-test", vec!["sham.offline.write".to_string()]);
         let out = host
-            .call(&ctx, "so", "push", serde_json::json!({"kind": {"type": "add_zone", "id": 1, "name": "z1", "capacity": 10}}))
+            .call(&ctx, "sb", "push", serde_json::json!({"kind": {"type": "add_zone", "id": 1, "name": "z1", "capacity": 10}}))
             .expect("push call");
         assert_eq!(out.get("lamport").and_then(|v| v.as_u64()), Some(1));
         let out = host
-            .call(&ctx, "so", "len", serde_json::json!({}))
+            .call(&ctx, "sb", "len", serde_json::json!({}))
             .expect("len call");
         assert_eq!(out.get("len").and_then(|v| v.as_u64()), Some(1));
         let out = host
-            .call(&ctx, "so", "merge", serde_json::json!({"a": [{"lamport": 2, "device": "d1", "kind": {"type": "park", "car": 1, "zone": 1}}], "b": [{"lamport": 1, "device": "d2", "kind": {"type": "add_car", "id": 1, "plate": "x"}}]}))
+            .call(&ctx, "sb", "merge", serde_json::json!({"a": [{"lamport": 2, "device": "d1", "kind": {"type": "park", "car": 1, "zone": 1}}], "b": [{"lamport": 1, "device": "d2", "kind": {"type": "add_car", "id": 1, "plate": "x"}}]}))
             .expect("merge call");
         assert_eq!(out.get("merged").and_then(|v| v.as_array()).map(|a| a.len()), Some(2));
         let n = host.verify_chain().expect("receipt chain must verify");
