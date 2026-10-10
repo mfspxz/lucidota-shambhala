@@ -1,5 +1,17 @@
 # Shambhala slice — build receipts
 
+## PROVENANCE (R-8, 2026-10-10): honestly-unsigned
+
+This file and any per-run receipts in this repo are **structured build
+evidence, not signed provenance**. They record measured test counts, the
+crate that ran them, and UTC timestamps. Verification power: reproduction —
+run `cargo test --workspace` against the recorded commit and the numbers
+should match. There is no signature, no commit-hash binding in the
+receipts, and no authority attestation. Nothing here should be read as
+"cryptographically proven". (The sham_api `Bearer <redacted>` auth is a live
+service control, not receipt provenance; its bounds are documented in
+AUDIT-APPLICATION.md, R-2.)
+
 Built 2026-10-06/07 (UTC) by lucidota-subagent, Rust-first, std-only (zero external crates, $0).
 Workspace: `~/workspace/shambhala` — 13 crates, single `cargo test --workspace` run.
 
