@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+organelle-host = { path = "../../../organelles/crates/organelle-host" }
+organelle-manifest = { path = "../../../organelles/crates/organelle-manifest" }
+serde_json = "1"
 sham_domain = { path = "../sham_domain" }
 sham_spatial = { path = "../sham_spatial" }
 sham_odin = { path = "../sham_odin" }

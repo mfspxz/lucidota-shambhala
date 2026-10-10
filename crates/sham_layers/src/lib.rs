@@ -4,6 +4,8 @@
 // (uncompressed 8-bit grayscale/RGB). CSV/GPX coordinate import with validation.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

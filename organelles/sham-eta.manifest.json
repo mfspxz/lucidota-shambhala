@@ -1,0 +1,45 @@
+{
+  "schema_version": "1",
+  "name": "sham-eta",
+  "codon": "et",
+  "version": "0.1.0",
+  "description": "ETA minutes from distance and speed (ODIN dispatch) (organelle)",
+  "contracts": [
+    {
+      "op": "eta",
+      "description": "ETA in minutes from distance (m) and speed (km/h)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "dist_m",
+          "speed_kmh"
+        ],
+        "properties": {
+          "dist_m": {
+            "type": "number"
+          },
+          "speed_kmh": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "read_only",
+    "declared_valence": "proven",
+    "required_capability": null,
+    "granted_capabilities": []
+  },
+  "transports": [
+    "native",
+    "unix_socket",
+    "mcp",
+    "rest"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

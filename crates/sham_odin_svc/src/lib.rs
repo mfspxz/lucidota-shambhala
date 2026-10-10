@@ -5,6 +5,8 @@
 // leaves a receipt; unknown features fail closed.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

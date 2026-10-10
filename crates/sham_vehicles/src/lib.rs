@@ -4,6 +4,8 @@
 // towed-by...). Graph DB of streets/points with tested queries.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

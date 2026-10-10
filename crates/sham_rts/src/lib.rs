@@ -5,6 +5,8 @@
 // fat-thumb volunteer UI. Pixel rendering is a thin layer over this.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

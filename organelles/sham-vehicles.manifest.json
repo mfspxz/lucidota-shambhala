@@ -1,0 +1,114 @@
+{
+  "schema_version": "1",
+  "name": "sham-vehicles",
+  "codon": "vh",
+  "version": "0.1.0",
+  "description": "fleet registry: vehicles, notes, and vehicle relations with receipts (organelle)",
+  "contracts": [
+    {
+      "op": "add",
+      "description": "register a vehicle",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "plate",
+          "model",
+          "year",
+          "colour",
+          "class"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "plate": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "colour": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.vehicles.write"
+    },
+    {
+      "op": "relate",
+      "description": "assert a relation between two vehicles (receipted)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "a",
+          "rel",
+          "b"
+        ],
+        "properties": {
+          "a": {
+            "type": "integer"
+          },
+          "rel": {
+            "type": "string"
+          },
+          "b": {
+            "type": "integer"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.vehicles.write"
+    },
+    {
+      "op": "related",
+      "description": "vehicles related to one vehicle by relation",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "a",
+          "rel"
+        ],
+        "properties": {
+          "a": {
+            "type": "integer"
+          },
+          "rel": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "op": "count",
+      "description": "registered vehicle count",
+      "input_schema": {
+        "type": "object"
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "write",
+    "declared_valence": "candidate",
+    "required_capability": "sham.vehicles.write",
+    "granted_capabilities": [
+      "sham.vehicles.write"
+    ]
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

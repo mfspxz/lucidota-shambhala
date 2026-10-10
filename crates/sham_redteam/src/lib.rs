@@ -3,6 +3,8 @@
 // defeated fail-closed. Findings are recorded as (attack, verdict, fix).
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

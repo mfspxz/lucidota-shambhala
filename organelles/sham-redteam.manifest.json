@@ -1,0 +1,38 @@
+{
+  "schema_version": "1",
+  "name": "sham-redteam",
+  "codon": "st",
+  "version": "0.1.0",
+  "description": "adversarial campaign: executable attacks with fail-closed verdicts (organelle)",
+  "contracts": [
+    {
+      "op": "campaign",
+      "description": "run all attacks in order; summarize held / pinned / regressions",
+      "input_schema": {
+        "type": "object"
+      }
+    },
+    {
+      "op": "passes",
+      "description": "true iff the campaign has no open findings",
+      "input_schema": {
+        "type": "object"
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "read_only",
+    "declared_valence": "candidate",
+    "required_capability": null,
+    "granted_capabilities": []
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

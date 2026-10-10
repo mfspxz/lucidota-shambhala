@@ -1,0 +1,97 @@
+{
+  "schema_version": "1",
+  "name": "sham-gesture",
+  "codon": "sg",
+  "version": "0.1.0",
+  "description": "touch gesture recognition: tap, double-tap, drag, long-press, paint (organelle)",
+  "contracts": [
+    {
+      "op": "touch",
+      "description": "feed one touch event; returns the recognized gesture if any",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          },
+          "t_ms": {
+            "type": "integer"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.gesture.write"
+    },
+    {
+      "op": "flush_tap",
+      "description": "flush a pending tap (timeout expiry)",
+      "input_schema": {
+        "type": "object"
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.gesture.write"
+    },
+    {
+      "op": "drag",
+      "description": "feed a drag from->to; returns the drag gesture",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "object"
+          },
+          "to": {
+            "type": "object"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.gesture.write"
+    },
+    {
+      "op": "paint",
+      "description": "paint mode: accumulate cells; returns cell count",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "cells"
+        ],
+        "properties": {
+          "cells": {
+            "type": "array"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.gesture.write"
+    }
+  ],
+  "authority": {
+    "mutation_class": "write",
+    "declared_valence": "candidate",
+    "required_capability": "sham.gesture.write",
+    "granted_capabilities": [
+      "sham.gesture.write"
+    ]
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

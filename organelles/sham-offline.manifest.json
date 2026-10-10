@@ -1,0 +1,83 @@
+{
+  "schema_version": "1",
+  "name": "sham-offline",
+  "codon": "so",
+  "version": "0.1.0",
+  "description": "offline-first op log: push, merge, replay; festival-map sync primitives (organelle)",
+  "contracts": [
+    {
+      "op": "push",
+      "description": "append an op to this device's log (lamport clock)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "object"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.offline.write"
+    },
+    {
+      "op": "ops",
+      "description": "all ops in this device's log",
+      "input_schema": {
+        "type": "object"
+      }
+    },
+    {
+      "op": "len",
+      "description": "op count",
+      "input_schema": {
+        "type": "object"
+      }
+    },
+    {
+      "op": "merge",
+      "description": "merge two op arrays (lamport order, deterministic)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "properties": {
+          "a": {
+            "type": "array"
+          },
+          "b": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "op": "runbook",
+      "description": "offline sync runbook steps",
+      "input_schema": {
+        "type": "object"
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "write",
+    "declared_valence": "candidate",
+    "required_capability": "sham.offline.write",
+    "granted_capabilities": [
+      "sham.offline.write"
+    ]
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

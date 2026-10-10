@@ -1,0 +1,74 @@
+{
+  "schema_version": "1",
+  "name": "sham-odin-svc",
+  "codon": "od",
+  "version": "0.1.0",
+  "description": "ODIN dispatch service: execute feature requests with receipted outcomes (organelle)",
+  "contracts": [
+    {
+      "op": "execute",
+      "description": "execute an ODIN feature request; unknown features are rejected (fail-closed)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "feature_id"
+        ],
+        "properties": {
+          "feature_id": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.odin.execute"
+    },
+    {
+      "op": "features_in",
+      "description": "count features matching a batch (service inventory probe)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "batch"
+        ],
+        "properties": {
+          "batch": {
+            "type": "string",
+            "enum": [
+              "dispatch",
+              "tracking",
+              "comms",
+              "reporting",
+              "admin",
+              "field_ops",
+              "analytics",
+              "integrations"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "write",
+    "declared_valence": "candidate",
+    "required_capability": "sham.odin.execute",
+    "granted_capabilities": [
+      "sham.odin.execute"
+    ]
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

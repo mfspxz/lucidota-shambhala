@@ -5,6 +5,8 @@
 // never silent overwrite). Deployment runbook as checked data.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

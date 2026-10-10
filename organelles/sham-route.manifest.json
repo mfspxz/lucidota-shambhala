@@ -1,0 +1,56 @@
+{
+  "schema_version": "1",
+  "name": "sham-route",
+  "codon": "sr",
+  "version": "0.1.0",
+  "description": "constraint-checked distance A->B for a vehicle class (organelle)",
+  "contracts": [
+    {
+      "op": "route",
+      "description": "distance in meters from A to B (great-circle; class reserved for constraint checks)",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "from_lat",
+          "from_lon",
+          "to_lat",
+          "to_lon"
+        ],
+        "properties": {
+          "from_lat": {
+            "type": "number"
+          },
+          "from_lon": {
+            "type": "number"
+          },
+          "to_lat": {
+            "type": "number"
+          },
+          "to_lon": {
+            "type": "number"
+          },
+          "class": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "read_only",
+    "declared_valence": "proven",
+    "required_capability": null,
+    "granted_capabilities": []
+  },
+  "transports": [
+    "native",
+    "unix_socket",
+    "mcp",
+    "rest"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

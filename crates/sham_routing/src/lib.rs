@@ -4,6 +4,8 @@
 // Flows are first-class map objects. Deterministic 500-car ingress simulator.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 

@@ -1,0 +1,111 @@
+{
+  "schema_version": "1",
+  "name": "sham-layers",
+  "codon": "ly",
+  "version": "0.1.0",
+  "description": "map layer stack: add, toggle, opacity, render order (organelle)",
+  "contracts": [
+    {
+      "op": "add",
+      "description": "add a layer; returns its index",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "z"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "z": {
+            "type": "integer"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.layers.write"
+    },
+    {
+      "op": "toggle",
+      "description": "toggle layer visibility; returns new state",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "idx"
+        ],
+        "properties": {
+          "idx": {
+            "type": "integer"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.layers.write"
+    },
+    {
+      "op": "set_opacity",
+      "description": "set layer opacity 0..1",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "idx",
+          "opacity"
+        ],
+        "properties": {
+          "idx": {
+            "type": "integer"
+          },
+          "opacity": {
+            "type": "number"
+          }
+        }
+      },
+      "mutation_class": "write",
+      "required_capability": "sham.layers.write"
+    },
+    {
+      "op": "render_order",
+      "description": "layers in render order (bottom to top)",
+      "input_schema": {
+        "type": "object"
+      }
+    },
+    {
+      "op": "by_kind",
+      "description": "layers of one kind",
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "authority": {
+    "mutation_class": "write",
+    "declared_valence": "candidate",
+    "required_capability": "sham.layers.write",
+    "granted_capabilities": [
+      "sham.layers.write"
+    ]
+  },
+  "transports": [
+    "native",
+    "unix_socket"
+  ],
+  "receipt_policy": {
+    "content_addressed": true,
+    "algorithm": "sha256",
+    "chain": true
+  }
+}

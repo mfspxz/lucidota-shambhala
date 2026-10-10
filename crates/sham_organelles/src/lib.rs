@@ -5,6 +5,8 @@
 // Manifest: name, version, description, inputs, outputs, transports.
 #![forbid(unsafe_code)]
 
+mod organelle;
+pub use organelle::*;
 #[cfg(test)]
 mod tests;
 
