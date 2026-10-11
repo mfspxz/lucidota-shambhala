@@ -205,15 +205,15 @@ mod tests {
         let out = host
             .call(&ctx, "sb", "push", serde_json::json!({"kind": {"type": "add_zone", "id": 1, "name": "z1", "capacity": 10}}))
             .expect("push call");
-        assert_eq!(out.get("lamport").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(out.output.get("lamport").and_then(|v| v.as_u64()), Some(1));
         let out = host
             .call(&ctx, "sb", "len", serde_json::json!({}))
             .expect("len call");
-        assert_eq!(out.get("len").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(out.output.get("len").and_then(|v| v.as_u64()), Some(1));
         let out = host
             .call(&ctx, "sb", "merge", serde_json::json!({"a": [{"lamport": 2, "device": "d1", "kind": {"type": "park", "car": 1, "zone": 1}}], "b": [{"lamport": 1, "device": "d2", "kind": {"type": "add_car", "id": 1, "plate": "x"}}]}))
             .expect("merge call");
-        assert_eq!(out.get("merged").and_then(|v| v.as_array()).map(|a| a.len()), Some(2));
+        assert_eq!(out.output.get("merged").and_then(|v| v.as_array()).map(|a| a.len()), Some(2));
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }

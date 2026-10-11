@@ -191,15 +191,15 @@ mod tests {
         let out = host
             .call(&ctx, "ly", "add", serde_json::json!({"name": "zones", "kind": "zone", "z": 1}))
             .expect("add call");
-        assert_eq!(out.get("idx").and_then(|v| v.as_u64()), Some(0));
+        assert_eq!(out.output.get("idx").and_then(|v| v.as_u64()), Some(0));
         let out = host
             .call(&ctx, "ly", "render_order", serde_json::json!({}))
             .expect("render_order call");
-        assert_eq!(out.get("layers").and_then(|v| v.as_array()).map(|a| a.len()), Some(1));
+        assert_eq!(out.output.get("layers").and_then(|v| v.as_array()).map(|a| a.len()), Some(1));
         let out = host
             .call(&ctx, "ly", "toggle", serde_json::json!({"idx": 0}))
             .expect("toggle call");
-        assert!(out.get("visible").and_then(|v| v.as_bool()).is_some());
+        assert!(out.output.get("visible").and_then(|v| v.as_bool()).is_some());
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
