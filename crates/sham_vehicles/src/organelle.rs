@@ -191,19 +191,19 @@ mod tests {
         let out = host
             .call(&ctx, "vh", "add", serde_json::json!({"id": 1, "plate": "ABC123", "model": "sprinter", "year": 2022, "colour": "white", "class": "truck"}))
             .expect("add call");
-        assert_eq!(out.get("ok").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(out.output.get("ok").and_then(|v| v.as_bool()), Some(true));
         let out = host
             .call(&ctx, "vh", "add", serde_json::json!({"id": 2, "plate": "XYZ789", "model": "transit", "year": 2021, "colour": "blue", "class": "truck"}))
             .expect("add call");
-        assert_eq!(out.get("ok").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(out.output.get("ok").and_then(|v| v.as_bool()), Some(true));
         let out = host
             .call(&ctx, "vh", "relate", serde_json::json!({"a": 1, "rel": "convoy_with", "b": 2}))
             .expect("relate call");
-        assert!(out.get("receipt").is_some());
+        assert!(out.output.get("receipt").is_some());
         let out = host
             .call(&ctx, "vh", "related", serde_json::json!({"a": 1, "rel": "convoy_with"}))
             .expect("related call");
-        assert_eq!(out.get("related").and_then(|v| v.as_array()).map(|a| a.len()), Some(1));
+        assert_eq!(out.output.get("related").and_then(|v| v.as_array()).map(|a| a.len()), Some(1));
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }

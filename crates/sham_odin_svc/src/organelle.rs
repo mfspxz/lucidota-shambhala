@@ -160,7 +160,7 @@ mod tests {
         let out = host
             .call(&ctx, "od", "execute", serde_json::json!({"feature_id": "nope"}))
             .expect("execute call");
-        assert_eq!(out.get("ok").and_then(|v| v.as_bool()), Some(false));
+        assert_eq!(out.output.get("ok").and_then(|v| v.as_bool()), Some(false));
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
