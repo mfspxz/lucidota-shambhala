@@ -202,3 +202,14 @@ No commit hashes are asserted by this application. Verify independently.
 - **Standing HIGHs:** none.
 - **Wont-fix list:** none.
 - **Queued follow-up (not wont-fix):** dedicated bounds doc for `sham_api` auth and `sham_redteam` gates (R-2).
+
+## BRUTAL-AUDIT ROLLOUT ROUND 2 — LANE 1 (2026-10-10)
+
+**Scope:** resolve organelle-host/hmac build collision + CallOk API fallout.
+**Pin strategy:** hmac 0.12.1 estate-wide — see `~/workspace/dogfood/audit/rollout/HMAC-PIN-STRATEGY.md`.
+
+**This repo:**
+- Commit(s): 3f30f34, 80af5ed, 4de0ed4, cb5aeae
+- Tests: sham_redteam 16/16; sham_organelles 7/7; sham_odin_svc 11/11; sham_vehicles 24/24; sham_offline 35/35; sham_layers 15/15; sham_rts 52/52; sham_routing 40/40
+- Change: CallOk API: X.get(..) => X.output.get(..) across 6 organelle crates. Workspace fully green.
+- Method: mechanical, test-only, zero behavior change. Selective staging; lane WIP (if any) left untouched.
