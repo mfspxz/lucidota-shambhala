@@ -139,11 +139,11 @@ mod tests {
         let out = host
             .call(&ctx, "st", "campaign", serde_json::json!({}))
             .expect("campaign call");
-        assert!(out.get("count").and_then(|v| v.as_u64()).is_some());
+        assert!(out.output.get("count").and_then(|v| v.as_u64()).is_some());
         let out = host
             .call(&ctx, "st", "passes", serde_json::json!({}))
             .expect("passes call");
-        assert!(out.get("passes").and_then(|v| v.as_bool()).is_some());
+        assert!(out.output.get("passes").and_then(|v| v.as_bool()).is_some());
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }

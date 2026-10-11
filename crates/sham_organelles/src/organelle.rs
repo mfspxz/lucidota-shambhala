@@ -357,7 +357,7 @@ mod tests {
         let out = host
             .call(&ctx, "sr", "route", serde_json::json!({"from_lat": 49.28, "from_lon": -123.12, "to_lat": 49.29, "to_lon": -123.13}))
             .expect("route call");
-        assert!(out.get("dist_m").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
+        assert!(out.output.get("dist_m").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
@@ -386,7 +386,7 @@ mod tests {
         let out = host
             .call(&ctx, "sz", "suggest_zone", serde_json::json!({"class": "car", "zones": [{"id": 1, "capacity": 10, "occupancy": 2}, {"id": 2, "capacity": 10, "occupancy": 9}]}))
             .expect("suggest_zone call");
-        assert!(out.get("zone_id").is_some());
+        assert!(out.output.get("zone_id").is_some());
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
@@ -415,11 +415,11 @@ mod tests {
         let out = host
             .call(&ctx, "vn", "validate", serde_json::json!({"lat": 49.28, "lon": -123.12, "ts_ms": 1000}))
             .expect("validate call");
-        assert_eq!(out.get("valid").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(out.output.get("valid").and_then(|v| v.as_bool()), Some(true));
         let out = host
             .call(&ctx, "vn", "validate", serde_json::json!({"lat": 999.0, "lon": -123.12, "ts_ms": 1000}))
             .expect("validate call");
-        assert_eq!(out.get("valid").and_then(|v| v.as_bool()), Some(false));
+        assert_eq!(out.output.get("valid").and_then(|v| v.as_bool()), Some(false));
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
@@ -448,7 +448,7 @@ mod tests {
         let out = host
             .call(&ctx, "et", "eta", serde_json::json!({"dist_m": 1000.0, "speed_kmh": 30.0}))
             .expect("eta call");
-        assert!(out.get("eta_min").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
+        assert!(out.output.get("eta_min").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }
