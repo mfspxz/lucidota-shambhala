@@ -188,11 +188,11 @@ mod tests {
         let out = host
             .call(&ctx, "sg", "touch", serde_json::json!({"lat": 49.28, "lon": -123.12, "t_ms": 100}))
             .expect("touch call");
-        assert!(out.get("gesture").is_some());
+        assert!(out.output.get("gesture").is_some());
         let out = host
             .call(&ctx, "sg", "paint", serde_json::json!({"cells": [{"min_lat": 49.28, "max_lat": 49.29, "min_lon": -123.13, "max_lon": -123.12}]}))
             .expect("paint call");
-        assert_eq!(out.get("cells").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(out.output.get("cells").and_then(|v| v.as_u64()), Some(1));
         let n = host.verify_chain().expect("receipt chain must verify");
         assert!(n >= 2, "register + calls = >=2 receipts, got {n}");
     }

@@ -178,8 +178,8 @@ mod tests {
                         {"id": 12, "name": "c", "from": 1, "to": 3, "width_cm": 500}],
             "from": 1, "to": 3, "class": "car"});
         let out = host.call(&ctx, "sa", "route", graph).expect("route call");
-        assert!(out.get("dist_m").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
-        assert!(out.get("hops").and_then(|v| v.as_u64()).unwrap_or(0) >= 1);
+        assert!(out.output.get("dist_m").and_then(|v| v.as_f64()).unwrap_or(0.0) > 0.0);
+        assert!(out.output.get("hops").and_then(|v| v.as_u64()).unwrap_or(0) >= 1);
         assert!(host.call(&ctx, "sa", "route",
             serde_json::json!({"nodes": [], "streets": [], "from": 9, "to": 10, "class": "car"})).is_err());
         let n = host.verify_chain().expect("receipt chain must verify");
